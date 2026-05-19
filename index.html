@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de ventas v0.02</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F5F4F0;--surface:#FFF;--border:#E2E0D8;--text:#1A1917;--muted:#7A7870;--radius:10px;--radius-sm:6px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+  .logo{font-weight:600;font-size:15px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+  .logo-dot{width:8px;height:8px;background:var(--text);border-radius:50%}
+  .btn{padding:8px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--text);font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+  .btn:hover{background:var(--bg)}
+  .btn-primary{background:var(--text);color:#fff;border-color:var(--text)}
+  .btn-primary:hover{background:#333}
+  main{max-width:1300px;margin:0 auto;padding:24px 16px 48px}
+  .info-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .info-icon{font-size:22px;flex-shrink:0}
+  .info-text{flex:1}
+  .info-text strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
+  .info-text span{font-size:12px;color:var(--muted)}
+  .info-badge{font-size:12px;padding:4px 12px;border-radius:99px;font-weight:500;white-space:nowrap;background:#D1FAE5;color:#065F46}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .stat-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .stat-num{font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .search-wrap{position:relative;flex:1;min-width:160px}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  input[type="text"]{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none}
+  input[type="text"]:focus{border-color:#999}
+  select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none;cursor:pointer}
+  .count-info{font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:700px}
+  thead th{background:#FAFAF8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  thead th.num-header{text-align:right}
+  tbody tr:hover{background:#FAFAF8}
+  tbody tr:not(:last-child) td{border-bottom:1px solid var(--border)}
+  td{padding:10px 14px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+  td.num{text-align:right;font-family:'DM Mono',monospace;font-size:12px}
+  .abc-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.5px}
+  .abc-a{background:#D1FAE5;color:#065F46}
+  .abc-b{background:#DBEAFE;color:#1E3A8A}
+  .abc-c{background:#FEF3C7;color:#92400E}
+  .abc-x{background:#F3F4F6;color:#6B7280}
+  .cumplimiento-bar{display:flex;align-items:center;gap:8px}
+  .bar-bg{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;min-width:50px}
+  .bar-fill{height:100%;border-radius:99px;transition:width .3s}
+  .bar-label{font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;min-width:44px;text-align:right}
+  .cumpl-alto{color:#065F46}.cumpl-medio{color:#D97706}.cumpl-bajo{color:#B91C1C}
+  .empty-state{text-align:center;padding:48px 24px;color:var(--muted);font-size:14px}
+  .empty-icon{font-size:36px;margin-bottom:12px}
+  .empty-state p{margin-bottom:16px}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(30,58,138,.3);border-top-color:#1E3A8A;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:100}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .filter-group{display:flex;align-items:center;gap:6px}
+  .filter-label{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}
+  .pills{display:flex;gap:5px;flex-wrap:wrap}
+  .pill{padding:5px 13px;border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;white-space:nowrap}
+  .pill:hover{border-color:#aaa;color:var(--text)}
+  .pill.active{background:var(--text);color:#fff;border-color:var(--text)}
+  .pill.p-cumplido.active{background:#059669;border-color:#059669}
+  .pill.p-progreso.active{background:#D97706;border-color:#D97706}
+  .pill.p-nocumplido.active{background:#DC2626;border-color:#DC2626}
+  .toggle-btn{padding:5px 13px;border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+  .toggle-btn:hover{border-color:#aaa;color:var(--text)}
+  .toggle-btn.on{background:#1D4ED8;border-color:#1D4ED8;color:#fff}
+  .toggle-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.6}
+  @media(max-width:700px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .filter-bar{flex-direction:column;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>Seguimiento de ventas <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">v0.02</span></div>
+</header>
+
+<main>
+  <div class="info-bar">
+    <div class="info-icon">&#128196;</div>
+    <div class="info-text">
+      <strong>Datos cargados por el administrador</strong>
+      <span id="info-fecha">Cargando...</span>
+    </div>
+    <span class="info-badge" id="info-badge">&#10003; Listo</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total registros</div><div class="stat-num" id="s-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Venta total mes</div><div class="stat-num" id="s-venta">—</div></div>
+    <div class="stat-card"><div class="stat-label">Objetivo total</div><div class="stat-num" id="s-objetivo">—</div></div>
+    <div class="stat-card"><div class="stat-label">Cumplimiento prom.</div><div class="stat-num" id="s-cumpl">—</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="buscar" placeholder="Buscar cliente, vendedor...">
+    </div>
+    <select id="fil-vendedor"><option value="">Todos los vendedores</option></select>
+    <select id="fil-familia"><option value="">Todas las familias</option></select>
+    <select id="fil-abc"><option value="">Todos (ABC)</option></select>
+    <span class="count-info" id="count-info"></span>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Objetivo:</span>
+      <div class="pills">
+        <button class="pill active" id="pill-todos" onclick="setPill('todos')">Todos</button>
+        <button class="pill p-cumplido" id="pill-cumplido" onclick="togglePill('cumplido')">&#10003; Cumplido</button>
+        <button class="pill p-progreso" id="pill-progreso" onclick="togglePill('progreso')">&#9654; En progreso</button>
+        <button class="pill p-nocumplido" id="pill-nocumplido" onclick="togglePill('nocumplido')">&#10005; Sin cumplir</button>
+      </div>
+    </div>
+    <div class="filter-group" style="margin-left:auto">
+      <button class="toggle-btn" id="toggle-objetivo" onclick="toggleObjetivo()">
+        <span class="toggle-dot"></span> Solo con objetivo
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:11%">Vendedor</th>
+          <th style="width:5%">ABC</th>
+          <th style="width:20%">Cliente</th>
+          <th style="width:13%">Familia</th>
+          <th class="num-header" style="width:10%">Obj. Cliente</th>
+          <th class="num-header" style="width:8%">MM</th>
+          <th class="num-header" style="width:10%">Venta Mes</th>
+          <th style="width:23%">Cumplimiento</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><span class="spinner"></span></div><p>Cargando datos...</p></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let filas=[];
+const filtrosCumpl=new Set();
+let soloConObjetivo=false;
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function primeraPalabra(s){
+  if(!s||s==='—')return'—';
+  return s.trim().split(/\s+/)[0];
+}
+
+function setPill(val){
+  filtrosCumpl.clear();
+  ['cumplido','progreso','nocumplido'].forEach(k=>document.getElementById('pill-'+k).classList.remove('active'));
+  document.getElementById('pill-todos').classList.add('active');
+  render();
+}
+function togglePill(val){
+  if(filtrosCumpl.has(val)){filtrosCumpl.delete(val);}
+  else{filtrosCumpl.add(val);}
+  const hayActivos=filtrosCumpl.size>0;
+  document.getElementById('pill-todos').classList.toggle('active',!hayActivos);
+  ['cumplido','progreso','nocumplido'].forEach(k=>document.getElementById('pill-'+k).classList.toggle('active',filtrosCumpl.has(k)));
+  render();
+}
+function toggleObjetivo(){
+  soloConObjetivo=!soloConObjetivo;
+  const btn=document.getElementById('toggle-objetivo');
+  btn.classList.toggle('on',soloConObjetivo);
+  btn.innerHTML=soloConObjetivo
+    ?'<span class="toggle-dot"></span> Solo con objetivo &#10003;'
+    :'<span class="toggle-dot"></span> Solo con objetivo';
+  render();
+}
+
+function limpiarNum(v){
+  if(!v)return 0;
+  // Formato: punto como decimal (1.362), puede tener % y espacios
+  const limpio=v.toString().replace(/[^0-9.\-]/g,'');
+  return parseFloat(limpio)||0;
+}
+
+function parsearCSV(texto){
+  const lineas=texto.trim().split(/\n/);
+  if(lineas.length<2)return[];
+  // Separador es ;
+  const headers=lineas[0].split(';').map(h=>h.toLowerCase().trim().replace(/"/g,'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+
+  return lineas.slice(1).map((l,i)=>{
+    if(!l.trim())return null;
+    const cols=l.split(';').map(c=>c.trim().replace(/^"|"$/g,''));
+    const obj={id:i};
+    headers.forEach((h,j)=>{
+      const v=cols[j]||'';
+      if(h==='vendedor')                          obj.vendedor=v;
+      else if(h==='razon_social')                 obj.cliente=v;
+      else if(h==='familia')                      obj.familia=v;
+      else if(h==='abc')                          obj.abc=v.toUpperCase();
+      else if(h==='objetivo_sugerido_cliente')     obj.objetivo=limpiarNum(v);
+      else if(h==='media_historica_cliente')       obj.media=limpiarNum(v);
+      else if(h==='venta_real_mes')               obj.venta=limpiarNum(v);
+      else if(h==='porcentaje_cumplimiento')       obj.cumplStr=v;
+    });
+    obj.vendedor=obj.vendedor||'—';
+    obj.cliente=obj.cliente||'—';
+    obj.familia=obj.familia||'—';
+    obj.abc=obj.abc||'—';
+    obj.objetivo=obj.objetivo||0;
+    obj.media=obj.media||0;
+    obj.venta=obj.venta||0;
+    obj.cumplReal=obj.objetivo>0?(obj.venta/obj.objetivo)*100:0;
+    obj.cumpl=Math.min(Math.max(obj.cumplReal,0),100);
+    return obj;
+  }).filter(o=>o&&o.cliente!=='—');
+}
+
+function fmt(n){return n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function cumplColor(p){return p>=100?'#059669':p>0?'#D97706':'#DC2626';}
+function cumplClass(p){return p>=100?'cumpl-alto':p>0?'cumpl-medio':'cumpl-bajo';}
+function abcClass(a){return a==='A'?'abc-a':a==='B'?'abc-b':a==='C'?'abc-c':'abc-x';}
+function cumplLabel(r){if(r>=100)return'100%';if(r<=0)return'0%';return r.toFixed(1)+'%';}
+
+async function cargarDatos(){
+  try{
+    const res=await fetch('./data.csv');
+    if(!res.ok)throw new Error('No se pudo cargar data.csv');
+    const texto=await res.text();
+    filas=parsearCSV(texto);
+    if(filas.length===0)throw new Error('Sin datos');
+    poblarFiltros();
+    render();
+    // Mostrar fecha del archivo
+    const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    document.getElementById('info-fecha').textContent=`${filas.length} registros · Actualizado el ${fecha}`;
+    toast(filas.length+' registros cargados');
+  }catch(e){
+    document.getElementById('info-badge').textContent='⚠ Error';
+    document.getElementById('info-badge').style.background='#FEE2E2';
+    document.getElementById('info-badge').style.color='#991B1B';
+    document.getElementById('info-fecha').textContent='No se pudieron cargar los datos.';
+    document.getElementById('tbody').innerHTML=`<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">&#9888;</div><p>${e.message}</p></div></td></tr>`;
+  }
+}
+
+function poblarFiltros(){
+  const vs=[...new Set(filas.map(f=>f.vendedor))].sort();
+  const fs=[...new Set(filas.map(f=>f.familia))].sort();
+  const as=[...new Set(filas.map(f=>f.abc))].filter(a=>a!=='—').sort();
+  const fv=document.getElementById('fil-vendedor');
+  const ff=document.getElementById('fil-familia');
+  const fa=document.getElementById('fil-abc');
+  const vA=fv.value,fA=ff.value,aA=fa.value;
+  fv.innerHTML='<option value="">Todos los vendedores</option>'+vs.map(v=>`<option${v===vA?' selected':''}>${v}</option>`).join('');
+  ff.innerHTML='<option value="">Todas las familias</option>'+fs.map(f=>`<option${f===fA?' selected':''}>${f}</option>`).join('');
+  fa.innerHTML='<option value="">Todos (ABC)</option>'+as.map(a=>`<option${a===aA?' selected':''}>${a}</option>`).join('');
+}
+
+function getFiltradas(){
+  const b=document.getElementById('buscar').value.toLowerCase();
+  const fv=document.getElementById('fil-vendedor').value;
+  const ff=document.getElementById('fil-familia').value;
+  const fa=document.getElementById('fil-abc').value;
+  return filas.filter(f=>{
+    if(fv&&f.vendedor!==fv)return false;
+    if(ff&&f.familia!==ff)return false;
+    if(fa&&f.abc!==fa)return false;
+    if(soloConObjetivo&&f.objetivo<=0)return false;
+    if(filtrosCumpl.size>0){
+      const esCumplido=f.cumplReal>=100;
+      const esProgreso=f.cumplReal>0&&f.cumplReal<100;
+      const esNoCumplido=f.cumplReal<=0;
+      const pasa=(filtrosCumpl.has('cumplido')&&esCumplido)||(filtrosCumpl.has('progreso')&&esProgreso)||(filtrosCumpl.has('nocumplido')&&esNoCumplido);
+      if(!pasa)return false;
+    }
+    if(b&&!f.cliente.toLowerCase().includes(b)&&!f.vendedor.toLowerCase().includes(b)&&!f.familia.toLowerCase().includes(b))return false;
+    return true;
+  });
+}
+
+function render(){
+  const lista=getFiltradas();
+  const tV=lista.reduce((s,f)=>s+f.venta,0);
+  const tO=lista.reduce((s,f)=>s+f.objetivo,0);
+  const cp=tO>0?(tV/tO)*100:0;
+  const cpMostrar=Math.min(Math.max(cp,0),100);
+  document.getElementById('s-total').textContent=lista.length;
+  document.getElementById('s-venta').textContent=fmt(tV);
+  document.getElementById('s-objetivo').textContent=fmt(tO);
+  document.getElementById('s-cumpl').innerHTML=`<span class="${cumplClass(cpMostrar)}">${cumplLabel(cp)}</span>`;
+  document.getElementById('count-info').textContent=lista.length!==filas.length
+    ?`${lista.length} de ${filas.length} registros`:`${filas.length} registros`;
+
+  const tbody=document.getElementById('tbody');
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">&#128269;</div><p>Sin resultados para los filtros aplicados.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=lista.map(f=>{
+    const pct=f.cumpl;
+    return `<tr>
+      <td title="${f.vendedor}" style="font-weight:500">${primeraPalabra(f.vendedor)}</td>
+      <td><span class="abc-badge ${abcClass(f.abc)}">${f.abc}</span></td>
+      <td title="${f.cliente}">${f.cliente}</td>
+      <td title="${f.familia}">${f.familia}</td>
+      <td class="num">${fmt(f.objetivo)}</td>
+      <td class="num">${fmt(f.media)}</td>
+      <td class="num">${fmt(f.venta)}</td>
+      <td><div class="cumplimiento-bar">
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${cumplColor(f.cumplReal)}"></div></div>
+        <span class="bar-label ${cumplClass(f.cumplReal)}">${cumplLabel(f.cumplReal)}</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+['buscar','fil-vendedor','fil-familia','fil-abc'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',render);
+  document.getElementById(id).addEventListener('change',render);
+});
+
+cargarDatos();
+</script>
+</body>
+</html>
